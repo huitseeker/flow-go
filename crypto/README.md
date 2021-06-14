@@ -66,7 +66,7 @@ All signature schemes use the generic interfaces of `PrivateKey` and `PublicKey`
     * multi-signature verification of an aggregated signature of a single message under multiple public keys.
     * multi-signature verification of an aggregated signature of multiple messages under multiple public keys.
     * batch verification of multiple signatures of a single message under multiple
-    public keys: use a binary tree of aggregations to find the invalid signatures.
+    * public keys: use a binary tree of aggregations to find the invalid signatures.
     * SPoCK scheme based on BLS: verifies two signatures have been generated from the same message that is unknown to the verifier.
 
  * Future features:

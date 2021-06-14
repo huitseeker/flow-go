@@ -7,6 +7,7 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.4.0
+	github.com/supranational/blst v0.3.4 // indirect
 	golang.org/x/crypto v0.0.0-20200117160349-530e935923ad
 	golang.org/x/sys v0.0.0-20200107162124-548cf772de50 // indirect
 	gonum.org/v1/gonum v0.6.1

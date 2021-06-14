@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/onflow/flow-go/crypto/hash"
+
+	blst "github.com/supranational/blst/bindings/go"
 )
 
 // BLS tests
@@ -28,6 +30,62 @@ func TestBLSBLS12381(t *testing.T) {
 func BenchmarkBLSBLS12381Sign(b *testing.B) {
 	halg := NewBLSKMAC("bench tag")
 	benchSign(b, BLSBLS12381, halg)
+}
+
+type PubKey = blst.P2Affine
+type Sig = blst.P1Affine
+
+func blstBenchSign(b *testing.B, halg hash.Hasher) {
+	seed := make([]byte, 48)
+	for j := 0; j < len(seed); j++ {
+		seed[j] = byte(j)
+	}
+	var ikm [32]byte
+	_, _ = rand.Read(ikm[:])
+	sk := blst.KeyGen(ikm[:])
+
+	input := []byte("Bench input")
+	var dst = []byte("BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_")
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		new(Sig).Sign(sk, input, dst)
+	}
+	b.StopTimer()
+}
+
+func BenchmarkBLSBLS12381SignBLST(b *testing.B) {
+	halg := NewBLSKMAC("bench tag")
+	blstBenchSign(b, halg)
+}
+
+func blstBenchVerify(b *testing.B, algo SigningAlgorithm, halg hash.Hasher) {
+	seed := make([]byte, 48)
+	for j := 0; j < len(seed); j++ {
+		seed[j] = byte(j)
+	}
+	var ikm [32]byte
+	_, _ = rand.Read(ikm[:])
+	sk := blst.KeyGen(ikm[:])
+
+	pk := new(PubKey).From(sk)
+
+	input := []byte("Bench input")
+	var dst = []byte("BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_")
+	sig := new(Sig).Sign(sk, input, dst)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		sig.Verify(true, pk, true, input, dst)
+	}
+
+	b.StopTimer()
+}
+
+// Verifying bench
+func BenchmarkBLSBLS12381VerifyBLST(b *testing.B) {
+	halg := NewBLSKMAC("bench tag")
+	blstBenchVerify(b, BLSBLS12381, halg)
 }
 
 // Verifying bench

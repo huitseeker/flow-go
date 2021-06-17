@@ -65,6 +65,7 @@ type Engine struct {
 	syncDeltas         mempool.Deltas      // storing the synced state deltas
 	syncFast           bool                // sync fast allows execution node to skip fetching collection during state syncing, and rely on state syncing to catch up
 	checkStakedAtBlock func(blockID flow.Identifier) (bool, error)
+	pauseExecution     bool
 }
 
 func New(
@@ -89,6 +90,7 @@ func New(
 	syncThreshold int,
 	syncFast bool,
 	checkStakedAtBlock func(blockID flow.Identifier) (bool, error),
+	pauseExecution bool,
 ) (*Engine, error) {
 	log := logger.With().Str("engine", "ingestion").Logger()
 
@@ -119,6 +121,7 @@ func New(
 		syncDeltas:         syncDeltas,
 		syncFast:           syncFast,
 		checkStakedAtBlock: checkStakedAtBlock,
+		pauseExecution:     pauseExecution,
 	}
 
 	// move to state syncing engine
@@ -135,9 +138,11 @@ func New(
 // Ready returns a channel that will close when the engine has
 // successfully started.
 func (e *Engine) Ready() <-chan struct{} {
-	err := e.reloadUnexecutedBlocks()
-	if err != nil {
-		e.log.Fatal().Err(err).Msg("failed to load all unexecuted blocks")
+	if !e.pauseExecution {
+		err := e.reloadUnexecutedBlocks()
+		if err != nil {
+			e.log.Fatal().Err(err).Msg("failed to load all unexecuted blocks")
+		}
 	}
 
 	return e.unit.Ready()
@@ -380,6 +385,13 @@ func (e *Engine) reloadBlock(
 // have passed consensus validation) received from the consensus nodes
 // Note: BlockProcessable might be called multiple times for the same block.
 func (e *Engine) BlockProcessable(b *flow.Header) {
+
+	// when the flag is on, no block will be executed. Useful for EN to serve
+	// execution state queries
+	if e.pauseExecution {
+		return
+	}
+
 	blockID := b.ID()
 	newBlock, err := e.blocks.ByID(blockID)
 	if err != nil {

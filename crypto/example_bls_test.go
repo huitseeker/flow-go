@@ -49,6 +49,19 @@ func ExampleHashToG1() {
 	// Output: G1 point: 934b3a537d5e092e8a0a6f9193fa2112fa178b1bd416adb6e6f3b95aeda3752f9297ddecc87920ec0c25b31bb748cc9b
 }
 
+// Test vector from https://github.com/algorand/bls_sigs_ref/blob/master/test-vectors/hash_g1/fips_186_3_P256
+func ExampleMapToG1Relic() {
+	msgString := "ff624d0ba02c7b6370c1622eec3fa2186ea681d1659e0a845448e777b75a8e77a77bb26e5733179d58ef9bc8a4e8b6971aef2539f77ab0963a3415bbd6258339bd1bf55de65db520c63f5b8eab3d55debd05e9494212170f5d65b3286b8b668705b1e2b2b5568610617abb51d2dd0cb450ef59df4b907da90cfa7b268de8c4c2"
+	msg, _ := hex.DecodeString(msgString)
+
+	var point pointG1
+	mapToG1Relic(&point, msg, []byte{01})
+	dest := make([]byte, signatureLengthBLSBLS12381)
+	writePointG1(dest, &point)
+	fmt.Printf("G1 point: %v\n", hex.EncodeToString(dest))
+	// Output: G1 point: 934b3a537d5e092e8a0a6f9193fa2112fa178b1bd416adb6e6f3b95aeda3752f9297ddecc87920ec0c25b31bb748cc9b
+}
+
 // Test vector from https://github.com/kwantam/bls_sigs_ref/blob/master/test-vectors/sig_g1_basic/fips_186_3_P256
 func ExampleSignatureWithXMD() {
 	skString := "708309a7449e156b0db70e5b52e606c7e094ed676ce8953bf6c14757c826f590"

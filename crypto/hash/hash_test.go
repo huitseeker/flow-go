@@ -11,7 +11,7 @@ import (
 
 func checkBytes(t *testing.T, input, expected, result []byte) {
 	if !bytes.Equal(expected, result) {
-		t.Errorf("hash mismatch: expect: %x have: %x, input is %x", expected, result, input)
+		t.Errorf("hash mismatch: expect: \n%x have:\n%x, input is %x", expected, result, input)
 	} else {
 		t.Logf("hash test ok: expect: %x, input: %x", expected, input)
 	}
@@ -82,6 +82,56 @@ func TestSha2_384(t *testing.T) {
 	_, _ = alg.Write([]byte("s"))
 	_, _ = alg.Write([]byte("t"))
 	hash = alg.SumHash()
+	checkBytes(t, input, expected, hash)
+}
+
+// Sanity checks of XMD_SHA2_256
+// See https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-10#appendix-K.1
+func TestXmd_Sha2_256(t *testing.T) {
+	dst := []byte("QUUX-V01-CS02-with-expander")
+
+	input := []byte("")
+	expected, _ := hex.DecodeString("8bcffd1a3cae24cf9cd7ab85628fd111bb17e3739d3b53f89580d217aa79526f1708354a76a402d3569d6a9d19ef3de4d0b991e4f54b9f20dcde9b95a66824cbdf6c1a963a1913d43fd7ac443a02fc5d9d8d77e2071b86ab114a9f34150954a7531da568a1ea8c760861c0cde2005afc2c114042ee7b5848f5303f0611cf297f")
+
+	alg := NewXMD_SHA2_256(dst)
+	hash := alg.ComputeHash(input)
+	checkBytes(t, input, expected, hash)
+
+	alg.Reset()
+	input = []byte("abc")
+	expected, _ = hex.DecodeString("fe994ec51bdaa821598047b3121c149b364b178606d5e72bfbb713933acc29c186f316baecf7ea22212f2496ef3f785a27e84a40d8b299cec56032763eceeff4c61bd1fe65ed81decafff4a31d0198619c0aa0c6c51fca15520789925e813dcfd318b542f8799441271f4db9ee3b8092a7a2e8d5b75b73e28fb1ab6b4573c192")
+	hash = alg.ComputeHash(input)
+	checkBytes(t, input, expected, hash)
+
+	alg.Reset()
+	input = []byte("abcdef0123456789")
+	expected, _ = hex.DecodeString("c9ec7941811b1e19ce98e21db28d22259354d4d0643e301175e2f474e030d32694e9dd5520dde93f3600d8edad94e5c364903088a7228cc9eff685d7eaac50d5a5a8229d083b51de4ccc3733917f4b9535a819b445814890b7029b5de805bf62b33a4dc7e24acdf2c924e9fe50d55a6b832c8c84c7f82474b34e48c6d43867be")
+	hash = alg.ComputeHash(input)
+	checkBytes(t, input, expected, hash)
+}
+
+// Sanity checks of XMD_SHA2_256
+// See https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-10#appendix-K.2
+func TestXmd_Sha2_512(t *testing.T) {
+	dst := []byte("QUUX-V01-CS02-with-expander")
+
+	input := []byte("")
+	expected, _ := hex.DecodeString("0687ce02eba5eb3faf1c3c539d1f04babd3c0f420edae244eeb2253b6c6d6865145c31458e824b4e87ca61c3442dc7c8c9872b0b7250aa33e0668ccebbd2b386de658ca11a1dcceb51368721ae6dcd2d4bc86eaebc4e0d11fa02ad053289c9b28a03da6c942b2e12c14e88dbde3b0ba619d6214f47212b628f3e1b537b66efcf")
+
+	alg := NewXMD_SHA2_512(dst)
+	hash := alg.ComputeHash(input)
+	checkBytes(t, input, expected, hash)
+
+	alg.Reset()
+	input = []byte("abc")
+	expected, _ = hex.DecodeString("779ae4fd8a92f365e4df96b9fde97b40486bb005c1a2096c86f55f3d92875d89045fbdbc4a0e9f2d3e1e6bcd870b2d7131d868225b6fe72881a81cc5166b5285393f71d2e68bb0ac603479959370d06bdbe5f0d8bfd9af9494d1e4029bd68ab35a561341dd3f866b3ef0c95c1fdfaab384ce24a23427803dda1db0c7d8d5344a")
+	hash = alg.ComputeHash(input)
+	checkBytes(t, input, expected, hash)
+
+	alg.Reset()
+	input = []byte("abcdef0123456789")
+	expected, _ = hex.DecodeString("f0953d28846a50e9f88b7ae35b643fc43733c9618751b569a73960c655c068db7b9f044ad5a40d49d91c62302eaa26163c12abfa982e2b5d753049e000adf7630ae117aeb1fb9b61fc724431ac68b369e12a9481b4294384c3c890d576a79264787bc8076e7cdabe50c044130e480501046920ff090c1a091c88391502f0fbac")
+	hash = alg.ComputeHash(input)
 	checkBytes(t, input, expected, hash)
 }
 

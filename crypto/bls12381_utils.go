@@ -141,6 +141,14 @@ func writePointG2(dest []byte, a *pointG2) {
 	)
 }
 
+// writePointG1 writes a G1 point in a slice of bytes
+func writePointG1(dest []byte, a *pointG1) {
+	C.ep_write_bin_compact((*C.uchar)(&dest[0]),
+		(*C.ep_st)(a),
+		(C.int)(signatureLengthBLSBLS12381),
+	)
+}
+
 // readVerifVector reads a G2 point from a slice of bytes
 func readPointG2(a *pointG2, src []byte) error {
 	switch C.ep2_read_bin_compact((*C.ep2_st)(a),

@@ -13,6 +13,8 @@ const (
 	SHA3_256
 	SHA3_384
 	KMAC128
+	XMD_SHA2_256
+	XMD_SHA2_512
 )
 
 // String returns the string representation of this hashing algorithm.

@@ -110,6 +110,20 @@ func (sk *PrKeyBLSBLS12381) Sign(data []byte, kmac hash.Hasher) (Signature, erro
 	return s, nil
 }
 
+func (sk *PrKeyBLSBLS12381) signRelicMap(data []byte) (Signature, error) {
+	var point pointG1
+	mapToG1Relic(&point, data, []byte("BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_"))
+
+	// set BLS context
+	blsInstance.reInit()
+
+	s := make([]byte, SignatureLenBLSBLS12381)
+	C.bls_sign_nomap((*C.uchar)(&s[0]),
+		(*C.bn_st)(&sk.scalar),
+		(*C.ep_st)(&point))
+	return s, nil
+}
+
 // Verify verifies a signature of a byte array using the public key and the input hasher.
 //
 // If the input signature slice has an invalid length or fails to deserialize into a curve

@@ -35,6 +35,26 @@ func ExampleDecodePrivateKey() {
 }
 
 // Test vector from https://github.com/algorand/bls_sigs_ref/blob/master/test-vectors/hash_g1/fips_186_3_P256
+func ExampleHashToFieldRelic() {
+	msgString := "ff624d0ba02c7b6370c1622eec3fa2186ea681d1659e0a845448e777b75a8e77a77bb26e5733179d58ef9bc8a4e8b6971aef2539f77ab0963a3415bbd6258339bd1bf55de65db520c63f5b8eab3d55debd05e9494212170f5d65b3286b8b668705b1e2b2b5568610617abb51d2dd0cb450ef59df4b907da90cfa7b268de8c4c2"
+	msg, _ := hex.DecodeString(msgString)
+
+	outBytes := make([]byte, 128)
+	mdXmdRelic(outBytes, msg, []byte{01})
+
+	hasher := hash.NewXMD_SHA2_256([]byte{01})
+
+	fieldHash := hasher.ComputeHash(msg)
+
+	fmt.Printf("Field elem preimage from Relic: %v\n", hex.EncodeToString(outBytes))
+	fmt.Printf("Field elem preimage from Go   : %v\n", hex.EncodeToString(fieldHash))
+
+	// Output:
+	// Field elem preimage from Relic: 5c2924cd6c84ca84d7be8efdf8f700cd817696dbfdd78ce3fde16845bcab54b605e3613d4f89f790f03101f95a5af7e3e91b9717ec55925b600610787b8e059f0de84a93e1888b069319ebec73219005b41fa89849515a8add30040863ba745c05e1c16ef3b221214af1e46098ab0bc3686bc44b9f5a17d1b2b337fae0892bbf
+	// Field elem preimage from Go   : 5c2924cd6c84ca84d7be8efdf8f700cd817696dbfdd78ce3fde16845bcab54b605e3613d4f89f790f03101f95a5af7e3e91b9717ec55925b600610787b8e059f0de84a93e1888b069319ebec73219005b41fa89849515a8add30040863ba745c05e1c16ef3b221214af1e46098ab0bc3686bc44b9f5a17d1b2b337fae0892bbf
+}
+
+// Test vector from https://github.com/algorand/bls_sigs_ref/blob/master/test-vectors/hash_g1/fips_186_3_P256
 func ExampleHashToG1() {
 	msgString := "ff624d0ba02c7b6370c1622eec3fa2186ea681d1659e0a845448e777b75a8e77a77bb26e5733179d58ef9bc8a4e8b6971aef2539f77ab0963a3415bbd6258339bd1bf55de65db520c63f5b8eab3d55debd05e9494212170f5d65b3286b8b668705b1e2b2b5568610617abb51d2dd0cb450ef59df4b907da90cfa7b268de8c4c2"
 	msg, _ := hex.DecodeString(msgString)

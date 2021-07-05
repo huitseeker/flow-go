@@ -95,6 +95,8 @@ func BenchmarkHashToG1(b *testing.B) {
 // The test vector is taken from the original sage implementation
 // https://github.com/kwantam/bls12-381_hash from the author of
 // https://eprint.iacr.org/2019/403.pdf.
+// TODO (FG): replace, as https://github.com/kwantam/bls12-381_hash is deprecated
+// see https://github.com/kwantam/bls12-381_hash/commit/fe051563541e9d0c3a181e74b1841910251ccb99
 func TestOpSwuHashToG1(t *testing.T) {
 	blsInstance.reInit()
 	inputs := []string{

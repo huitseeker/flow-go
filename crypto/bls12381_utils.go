@@ -153,6 +153,10 @@ func mapToG1Relic(dest *pointG1, msg, dst []byte) {
 	C.ep_map_dst((*C.ep_st)(dest), (*C.uchar)(&msg[0]), (C.int)(len(msg)), (*C.uchar)(&dst[0]), (C.int)(len(dst)))
 }
 
+func mdXmdRelic(dest, msg, dst []byte) {
+	C.md_xmd_sh256((*C.uchar)(&dest[0]), (C.int)(len(dest)), (*C.uchar)(&msg[0]), (C.int)(len(msg)), (*C.uchar)(&dst[0]), (C.int)(len(dst)))
+}
+
 // readVerifVector reads a G2 point from a slice of bytes
 func readPointG2(a *pointG2, src []byte) error {
 	switch C.ep2_read_bin_compact((*C.ep2_st)(a),

@@ -302,6 +302,10 @@ int ep_read_bin_compact(ep_t a, const byte *bin, const int len) {
     int compressed = bin[0] >> 7;
     int y_sign = (bin[0] >> 5) & 1;
 
+    if (compressed ^ G1_SERIALIZATION) {
+      return RLC_ERR;
+    }
+
     if (y_sign && (!compressed)) {
         return RLC_ERR;
     } 
@@ -405,6 +409,9 @@ int ep2_read_bin_compact(ep2_t a, const byte *bin, const int len) {
 	} 
     byte compressed = bin[0] >> 7;
     byte y_sign = (bin[0] >> 5) & 1;
+    if (compressed ^ G2_SERIALIZATION) {
+      return RLC_ERR;
+    }
     if (y_sign && (!compressed)) {
         return RLC_ERR;
     } 

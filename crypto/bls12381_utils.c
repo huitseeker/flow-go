@@ -18,6 +18,10 @@ int get_invalid() {
     return INVALID;
 }
 
+void bn_new_wrapper(bn_t a) {
+    bn_new(a);
+}
+
 // global variable of the pre-computed data
 prec_st bls_prec_st;
 prec_st* bls_prec = NULL;
@@ -43,8 +47,8 @@ const uint64_t p_1div2_data[Fp_DIGITS] = {
 
 
 // sets the global variable to input
-void precomputed_data_set(prec_st* p) {
-    bls_prec = p;
+void precomputed_data_set(const prec_st* p) {
+    bls_prec = (prec_st*)p;
 }
 
 // Reads a prime field element from a digit vector in big endian format.
@@ -218,7 +222,7 @@ void bn_map_to_Zr_star(bn_t a, const uint8_t* bin, int len) {
 
 // returns the sign of y.
 // 1 if y > (p - 1)/2 and 0 otherwise.
-static int fp_get_sign(fp_t y) {
+static int fp_get_sign(const fp_t y) {
     bn_t bn_y;
     bn_new(bn_y);
     fp_prime_back(bn_y, y);

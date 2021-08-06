@@ -135,27 +135,6 @@ func validSignature(t *rapid.T) []byte {
 	return signature
 }
 
-// validPrivateKeyBytesBLST generates bytes of a valid BLST private key
-func validPrivateKeyBytesBLST(t *rapid.T) []byte {
-	randomSlice := rapid.SliceOfN(rapid.Byte(), KeyGenSeedMinLenBLSBLS12381, KeyGenSeedMaxLenBLSBLS12381)
-	ikm := randomSlice.Draw(t, "ikm").([]byte)
-	return blst.KeyGen(ikm).Serialize()
-}
-
-func testKeyGenDecodePrivateCrossBLST(t *rapid.T) {
-	skBytes := rapid.Custom(validPrivateKeyBytesBLST).Example().([]byte)
-	_, err := DecodePrivateKey(BLSBLS12381, skBytes)
-	require.NoError(t, err)
-}
-
-func testGenKeyDeserializeScalarCrossBLST(t *rapid.T) {
-	skBytes := rapid.Custom(validPrivateKeyBytes).Example().([]byte)
-	var skBLST blst.Scalar
-	res := skBLST.Deserialize(skBytes)
-
-	assert.True(t, res != nil)
-}
-
 // testEncodeDecodePrivateKeyCrossBLST tests encoding and decoding of private keys are consistent with BLST.
 // This test assumes private key serialization is identical to the one in BLST.
 func testEncodeDecodePrivateKeyCrossBLST(t *rapid.T) {
@@ -274,8 +253,6 @@ func testSignWithRelicMapCrossBLST(t *rapid.T) {
 }
 
 func TestBLSCrossBLST(t *testing.T) {
-	rapid.Check(t, testKeyGenDecodePrivateCrossBLST)
-	rapid.Check(t, testGenKeyDeserializeScalarCrossBLST)
 	rapid.Check(t, testEncodeDecodePrivateKeyCrossBLST)
 	rapid.Check(t, testEncodeDecodePublicKeyCrossBLST)
 	rapid.Check(t, testEncodeDecodeSignatureCrossBLST)

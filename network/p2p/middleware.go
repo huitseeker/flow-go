@@ -13,6 +13,7 @@ import (
 	libp2pnetwork "github.com/libp2p/go-libp2p-core/network"
 	"github.com/rs/zerolog"
 
+	"github.com/onflow/flow-go/crypto"
 	"github.com/onflow/flow-go/engine"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module"
@@ -315,7 +316,7 @@ func (m *Middleware) handleIncomingStream(s libp2pnetwork.Stream) {
 	log.Info().Msg("incoming stream received")
 
 	//create a new readConnection with the context of the middleware
-	conn := newReadConnection(m.ctx, s, m.processMessage, log, m.metrics, LargeMsgMaxUnicastMsgSize)
+	conn := newReadConnection(m.ctx, s, m.processUnauthenticatedMessage, log, m.metrics, LargeMsgMaxUnicastMsgSize)
 
 	// kick off the receive loop to continuously receive messages
 	m.wg.Add(1)
@@ -359,8 +360,27 @@ func (m *Middleware) Unsubscribe(channel network.Channel) error {
 	return nil
 }
 
-// processMessage processes a message and eventually passes it to the overlay
-func (m *Middleware) processMessage(msg *message.Message) {
+// processMessage processes a message and a source (indicated by its PublicKey) and eventually passes it to the overlay
+func (m *Middleware) processMessage(msg *message.Message, originKey crypto.PublicKey) {
+	identities, err := m.ov.Identity()
+	if err != nil {
+		m.log.Error().Err(err).Msg("failed to retrieve identities list while delivering a message")
+	}
+
+	// check the origin of the message corresponds to the one claimed in the OriginID
+	originID := flow.HashToID(msg.OriginID)
+
+	originIdentity, found := identities[originID]
+	if !found || originIdentity.NetworkPubKey != originKey {
+		m.log.Warn().Msgf("message claiming to be from nodeID %v with key %x was actually signed by %x and dropped", originID, originIdentity.NetworkPubKey, originKey)
+		return
+	}
+
+	m.processUnauthenticatedMessage(msg)
+}
+
+// processUnAuthenticatedMessage processes a message and eventually passes it to the overlay
+func (m *Middleware) processUnauthenticatedMessage(msg *message.Message) {
 
 	// run through all the message validators
 	for _, v := range m.validators {

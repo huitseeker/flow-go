@@ -5,9 +5,12 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+
 	"github.com/rs/zerolog"
 
+	"github.com/onflow/flow-go/crypto"
 	"github.com/onflow/flow-go/module"
 	"github.com/onflow/flow-go/network/message"
 	_ "github.com/onflow/flow-go/utils/binstat"
@@ -20,13 +23,13 @@ type readSubscription struct {
 	log      zerolog.Logger
 	sub      *pubsub.Subscription
 	metrics  module.NetworkMetrics
-	callback func(msg *message.Message)
+	callback func(msg *message.Message, pubKey crypto.PublicKey)
 }
 
 // newReadSubscription reads the messages coming in on the subscription
 func newReadSubscription(ctx context.Context,
 	sub *pubsub.Subscription,
-	callback func(msg *message.Message),
+	callback func(msg *message.Message, pubKey crypto.PublicKey),
 	log zerolog.Logger,
 	metrics module.NetworkMetrics) *readSubscription {
 
@@ -87,10 +90,29 @@ func (r *readSubscription) receiveLoop(wg *sync.WaitGroup) {
 			return
 		}
 
+		// if pubsub.WithMessageSigning(true) and pubsub.WithStrictSignatureVerification(true),
+		// the emitter is authenticated
+		emitter, err := peer.IDFromBytes(rawMsg.From)
+		if err != nil {
+			r.log.Err(err).Msgf("failed to unmarshal peerID %v of a message", rawMsg.From)
+			return
+		}
+		// we use ECDSA, so the PeerID should be an identity mutlihash and this should succeed
+		pk, err := emitter.ExtractPublicKey()
+		if err != nil {
+			r.log.Err(err).Msgf("failed to extract public key of peerID %v", emitter.String())
+			return
+		}
+		flowKey, err := PublicKeyFromNetwork(pk)
+		if err != nil {
+			r.log.Err(err).Msgf("failed to extract flow public key of libp2p key %v", err)
+			return
+		}
+
 		// log metrics
 		r.metrics.NetworkMessageReceived(msg.Size(), msg.ChannelID, msg.Type)
 
 		// call the callback
-		r.callback(&msg)
+		r.callback(&msg, flowKey)
 	}
 }

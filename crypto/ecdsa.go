@@ -236,6 +236,39 @@ func (a *ecdsaAlgo) decodePublicKey(der []byte) (PublicKey, error) {
 	return a.rawDecodePublicKey(der)
 }
 
+// given a compressed public key according to X9.62 section 4.3.6, returns
+// this compressed representation uses an extra bit to disambiguate sign
+func (a *ecdsaAlgo) decodePublicKeyCompressed(pkBytes []byte) (PublicKey, error) {
+	if len(pkBytes) != PubKeyLenECDSAP256/2+1 {
+		return nil, newInvalidInputsError("input length incompatible with a 128-bits security ECDSA key in compressed form")
+	}
+	var goPubKey *ecdsa.PublicKey
+
+	if a.curve == elliptic.P256() {
+		x, y := elliptic.UnmarshalCompressed(a.curve, pkBytes)
+		if x == nil {
+			return nil, newInvalidInputsError("Key %x can't be interpreted as %v", pkBytes, a.algo.String())
+		}
+		goPubKey = new(goecdsa.PublicKey)
+		goPubKey.Curve = a.curve
+		goPubKey.X = x
+		goPubKey.Y = y
+
+	} else if a.curve == btcec.S256() {
+		pk, err := btcec.ParsePubKey(pkBytes, btcec.S256())
+		if err != nil {
+			return nil, newInvalidInputsError("Key %x can't be interpreted as %v", pkBytes, a.algo.String())
+		}
+		goPubKey = (*ecdsa.PublicKey)(pk)
+	} else {
+		return nil, newInvalidInputsError("Key type %v is not convertible to a 128-bits security ECDSA key", a.algo.String())
+	}
+	if !checkPublicKeyValid(goPubKey) {
+		return nil, newInvalidInputsError("input is not a valid %s key", a.algo)
+	}
+	return &PubKeyECDSA{a, goPubKey}, nil
+}
+
 // PrKeyECDSA is the private key of ECDSA, it implements the generic PrivateKey
 type PrKeyECDSA struct {
 	// the signature algo
@@ -326,47 +359,11 @@ func (pk *PubKeyECDSA) Size() int {
 
 // given a public key (x,y), returns a compressed encoding according to X9.62 section 4.3.6
 // this compressed representation uses an extra bit to disambiguate sign
-func (pk *PubKeyECDSA) encodeCompressed() []byte {
+func (pk *PubKeyECDSA) EncodeCompressed() []byte {
 	if pk.alg.curve == btcec.S256() {
 		return (*btcec.PublicKey)(pk.goPubKey).SerializeCompressed()
 	}
 	return elliptic.MarshalCompressed(pk.goPubKey, pk.goPubKey.X, pk.goPubKey.Y)
-}
-
-// given a compressed public key according to X9.62 section 4.3.6, returns
-// this compressed representation uses an extra bit to disambiguate sign
-func decodeCompressed(ec elliptic.Curve, pkBytes []byte) (*PubKeyECDSA, error) {
-	if len(pkBytes) != PubKeyLenECDSAP256/2+1 {
-		return nil, newInvalidInputsError("input length incompatible with a 128-bits security ECDSA key in compressed form")
-	}
-	var keyAlgo *ecdsaAlgo
-	var goPubKey *ecdsa.PublicKey
-
-	if ec == elliptic.P256() {
-		keyAlgo = p256Instance
-		x, y := elliptic.UnmarshalCompressed(keyAlgo.curve, pkBytes)
-		if x == nil {
-			return nil, newInvalidInputsError("Key %x can't be interpreted as %v", pkBytes, keyAlgo.algo.String())
-		}
-		goPubKey = new(goecdsa.PublicKey)
-		goPubKey.Curve = keyAlgo.curve
-		goPubKey.X = x
-		goPubKey.Y = y
-
-	} else if ec == btcec.S256() {
-		keyAlgo = secp256k1Instance
-		pk, err := btcec.ParsePubKey(pkBytes, btcec.S256())
-		if err != nil {
-			return nil, newInvalidInputsError("Key %x can't be interpreted as %v", pkBytes, keyAlgo.algo.String())
-		}
-		goPubKey = (*ecdsa.PublicKey)(pk)
-	} else {
-		return nil, newInvalidInputsError("Key type %v is not convertible to a 128-bits security ECDSA key", keyAlgo.algo.String())
-	}
-	if !checkPublicKeyValid(goPubKey) {
-		return nil, newInvalidInputsError("input is not a valid %s key", keyAlgo.algo)
-	}
-	return &PubKeyECDSA{keyAlgo, goPubKey}, nil
 }
 
 // given a public key (x,y), returns a raw uncompressed encoding bytes(x)||bytes(y)

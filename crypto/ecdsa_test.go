@@ -8,7 +8,6 @@ import (
 	"crypto/rand"
 	"math/big"
 
-	"github.com/btcsuite/btcd/btcec"
 	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,12 +24,12 @@ func createSeed(t *testing.T) []byte {
 }
 
 // keyType returns an elliptic.Curve for an fcrypto.SigningAlgorithm if it exists
-func ecdsaCurveType(sa SigningAlgorithm) (elliptic.Curve, error) {
+func ecdsaAlgoFromSA(sa SigningAlgorithm) (*ecdsaAlgo, error) {
 	switch sa {
 	case ECDSAP256:
-		return elliptic.P256(), nil
+		return p256Instance, nil
 	case ECDSASecp256k1:
-		return btcec.S256(), nil
+		return secp256k1Instance, nil
 	default:
 		return nil, newInvalidInputsError("Input does not correspond to an ECDSA Algorithm")
 	}
@@ -313,7 +312,7 @@ func TestCompressionRoundTrip(t *testing.T) {
 	sa := []SigningAlgorithm{ECDSAP256, ECDSASecp256k1}
 	loops := 50
 	for _, s := range sa {
-		ct, err := ecdsaCurveType(s)
+		ct, err := ecdsaAlgoFromSA(s)
 		require.NoError(t, err)
 
 		for i := 0; i < loops; i++ {
@@ -326,20 +325,17 @@ func TestCompressionRoundTrip(t *testing.T) {
 			// get the Flow public key
 			fpublic := fpk.PublicKey()
 
-			// retrieve the ECDSA variant
-			fpublicEcdsa := fpublic.(*PubKeyECDSA)
-
 			// get the compressed bytes
-			fpublicBytes := fpublicEcdsa.encodeCompressed()
+			fpublicBytes := fpublic.EncodeCompressed()
 
 			// test the length  (it's the same value for PubKeyLenECDSASecp256k1)
 			require.Len(t, fpublicBytes, PubKeyLenECDSAP256/2+1)
 
 			// get the key back
-			fpublicOut, err := decodeCompressed(ct, fpublicBytes)
+			fpublicOut, err := ct.decodePublicKeyCompressed(fpublicBytes)
 
 			require.NoError(t, err)
-			require.Equal(t, fpublicEcdsa, fpublicOut)
+			require.Equal(t, fpublic, fpublicOut)
 
 		}
 	}

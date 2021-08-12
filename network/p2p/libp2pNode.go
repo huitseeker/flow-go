@@ -56,10 +56,10 @@ func DefaultLibP2PNodeFactory(ctx context.Context, log zerolog.Logger, me flow.I
 
 	// create PubSub options for libp2p to use
 	psOptions := []pubsub.Option{
-		// skip message signing
-		pubsub.WithMessageSigning(false),
-		// skip message signature
-		pubsub.WithStrictSignatureVerification(false),
+		// Use message signing
+		pubsub.WithMessageSigning(true),
+		// Use message signature
+		pubsub.WithStrictSignatureVerification(true),
 		// set max message size limit for 1-k PubSub messaging
 		pubsub.WithMaxMessageSize(maxPubSubMsgSize),
 		// no discovery

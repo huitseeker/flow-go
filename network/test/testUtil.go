@@ -247,9 +247,9 @@ func generateLibP2PNode(t *testing.T,
 
 	// create PubSub options for libp2p to use
 	psOptions := []pubsub.Option{
-		// skip message signing
-		pubsub.WithMessageSigning(false),
-		// skip message signature
+		// with message signing
+		pubsub.WithMessageSigning(true),
+		// with no message signature verification
 		pubsub.WithStrictSignatureVerification(false),
 		// set max message size limit for 1-k PubSub messaging
 		pubsub.WithMaxMessageSize(p2p.DefaultMaxPubSubMsgSize),

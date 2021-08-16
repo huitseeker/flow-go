@@ -117,16 +117,5 @@ func (pm *PeerManager) updatePeers() {
 		Msg("connecting to peers")
 
 	// ask the connector to connect to all peers in the list
-	err = pm.connector.UpdatePeers(pm.unit.Ctx(), peers)
-	if err == nil {
-		return
-	}
-
-	if IsUnconvertibleIdentitiesError(err) {
-		// log conversion error as fatal since it indicates a bad identity table
-		pm.logger.Fatal().Err(err).Msg("failed to connect to peers")
-		return
-	}
-
-	pm.logger.Error().Err(err).Msg("failed to connect to peers")
+	pm.connector.UpdatePeers(pm.unit.Ctx(), peers)
 }
